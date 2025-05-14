@@ -1,16 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // 可能是路径别名配置问题，尝试使用相对路径导入
-import Home from '../views/Home.vue'
-import About from '../views/About.vue'
+import ChatBot from '@/views/chatbot/index.vue'
 
-const routes = [
-    { path: '/', name: 'Home', component: Home },
-    { path: '/about', name: 'About', component: About }
-]
+const routes = [{ path: '/:userKey', name: 'ChatBot', component: ChatBot }]
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes
+  history: createWebHistory('/chatbot'),
+  routes,
 })
 
 export default router

@@ -9,6 +9,8 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  root: resolve(__dirname, '.'),
+  base: '/chatbot/',
   plugins: [vue(),
   AutoImport({ imports: ['vue', 'vue-router'], resolvers: [ArcoResolver()], }),
   Components({ resolvers: [ArcoResolver()], }),
