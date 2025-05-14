@@ -6,6 +6,9 @@ function handleFunctionUpdate<T>(newValue: (prev: T) => T, prev: T): T {
   return newValue(prev);
 }
 
+/**
+ * 自定义的 useState 钩子，支持对象和非对象类型的状态管理
+ */
 export function useState<T>(initialValue: T) {
   const isObj = typeof initialValue === 'object' && initialValue!== null;
   const state = isObj? reactive(initialValue) : ref(initialValue) as Ref<UnwrapRef<T>>;
