@@ -9,51 +9,59 @@
       @keydown="handleKeyDown"
       @click="handleClick"
       placeholder="输入内容，可插入标签和输入框..."
-    ></div>
+    >
+      <!-- 动态插入标签和输入框 -->
+      <template v-for="(item, index) in dynamicElements" :key="index">
+        <component :is="item.type" v-bind="item.props" />
+      </template>
+    </div>
     
     <div class="toolbar">
-      <button @click="insertTag">插入标签</button>
-      <button @click="insertInput">插入输入框</button>
-      <button @click="handleSend">发送</button>
+      <a-button @click="insertTag" size="small">插入标签</a-button>
+      <a-button @click="insertInput" size="small">插入输入框</a-button>
+      <a-button @click="handleSend" type="primary" size="small">发送</a-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineEmits, markRaw } from 'vue';
+import { Button as AButton, Input as AInput, Tag as ATag } from '@arco-design/web-vue';
 
 const editor = ref(null);
 const emit = defineEmits(['send']);
+const dynamicElements = ref([]);
 
 const insertTag = () => {
-  const tag = document.createElement('span');
-  tag.className = 'content-tag';
-  tag.contentEditable = false;
-  tag.textContent = '标签';
-  insertNodeAtCursor(tag);
+  dynamicElements.value.push({ 
+    type: markRaw(ATag), 
+    props: { 
+      closable: true, 
+      onClose: handleTagClose, 
+      children: '新标签' 
+    } 
+  }); 
 };
-
 const insertInput = () => {
-  const input = document.createElement('input');
-  input.className = 'content-input';
-  input.type = 'text';
-  input.placeholder = '输入内容...';
-  insertNodeAtCursor(input);
+  dynamicElements.value.push({ 
+    type: markRaw(AInput), 
+    props: { 
+      placeholder: '请输入', 
+      size: 'small', 
+      style: 'width: 120px; vertical-align: middle;' 
+    } 
+  }); 
+  // 自动聚焦到新插入的输入框 
+  setTimeout(() => { 
+    const inputs = editor.value.querySelectorAll('.arco-input'); 
+    if (inputs.length > 0) { 
+      inputs[inputs.length - 1].focus(); 
+    } 
+  }, 0); 
 };
 
-const insertNodeAtCursor = (node) => {
-  const selection = window.getSelection();
-  if (selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(node);
-    // 移动光标到新节点后
-    const newRange = document.createRange();
-    newRange.setStartAfter(node);
-    newRange.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-  }
+const handleTagClose = (index) => {
+  dynamicElements.value.splice(index, 1);
 };
 
 const handleInput = () => {
@@ -68,7 +76,7 @@ const handleKeyDown = (e) => {
 };
 
 const handleClick = (e) => {
-  // 处理点击事件，确保可编辑区域保持焦点
+  // 处理点击事件
 };
 
 const handleSend = () => {
@@ -78,22 +86,26 @@ const handleSend = () => {
 };
 
 const extractContent = () => {
-  const elements = editor.value.querySelectorAll('.content-tag, .content-input');
   const result = [];
-  
-  elements.forEach(el => {
-    if (el.classList.contains('content-tag')) {
-      result.push({ type: 'tag', content: el.textContent });
-    } else if (el.classList.contains('content-input')) {
-      result.push({ type: 'input', content: el.value });
+  dynamicElements.value.forEach(item => {
+    if (item.type === ATag) {
+      result.push({
+        type: 'tag',
+        content: item.props.children
+      });
+    } else if (item.type === AInput) {
+      const input = editor.value.querySelector(`.arco-input[placeholder="${item.props.placeholder}"]`);
+      result.push({
+        type: 'input',
+        content: input ? input.value : ''
+      });
     }
   });
-  
-  return result;
+  return result.filter(item => item.content);
 };
 
 const clearContent = () => {
-  editor.value.innerHTML = '';
+  dynamicElements.value = [];
 };
 
 onMounted(() => {
@@ -103,50 +115,42 @@ onMounted(() => {
 
 <style scoped>
 .mixed-input-container {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
   padding: 12px;
+  background: #ffffff;
+  width: 100%;
+  text-align: left;
 }
 
 .mixed-editor {
   min-height: 100px;
   padding: 8px;
-  border: 1px solid #eee;
-  border-radius: 4px;
+  border: 1px solid #e5e5e5;
+  border-radius: 2px;
   outline: none;
+  background: #ffffff;
+  color: black;
 }
 
 .mixed-editor:empty:before {
   content: attr(placeholder);
-  color: #aaa;
+  color: #999999;
 }
 
-.content-tag {
+.arco-tag-wrapper {
   display: inline-block;
-  background-color: #e0e0e0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin: 0 2px;
+  margin: 0 4px;
 }
 
-.content-input {
-  border: 1px solid #ddd;
-  padding: 2px 4px;
-  border-radius: 4px;
-  margin: 0 2px;
+.arco-input-wrapper {
+  display: inline-block;
+  margin: 0 4px;
 }
 
 .toolbar {
-  margin-top: 8px;
+  margin-top: 12px;
   display: flex;
   gap: 8px;
-}
-
-.toolbar button {
-  padding: 4px 8px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
 }
 </style>

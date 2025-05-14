@@ -12,8 +12,13 @@ export default defineConfig({
   root: resolve(__dirname, '.'),
   base: '/chatbot/',
   plugins: [vue(),
-  AutoImport({ imports: ['vue', 'vue-router'], resolvers: [ArcoResolver()], }),
-  Components({ resolvers: [ArcoResolver()], }),
+  AutoImport({
+    imports: ['vue', 'vue-router'],
+    resolvers: [ArcoResolver({ importStyle: 'less' })],
+  }),
+  Components({
+    resolvers: [ArcoResolver({ importStyle: 'less' })],
+  }),
   createSvgIconsPlugin({
     iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
     symbolId: 'icon-[dir]-[name]',
